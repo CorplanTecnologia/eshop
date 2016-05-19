@@ -4,7 +4,7 @@ author                    : Peter Širka
 
 // IMPORTANT: PLEASE CREATE YOUR OWN DB on your server or on some MongoDB cloud.
 // DON'T CHANGE A DATA
-database                  : mongodb://eshop:123456@ds061374.mongolab.com:61374/eshop
+database                  : mongodb://127.0.0.1/eshop
 
 // A relative URL address into the eshop management
 manager-url               : /$manager
@@ -29,4 +29,4 @@ mail.smtp                 : YOUR.SMTPSERVER.COM
 default-image-converter   : gm
 
 // Default theme
-default-theme             : default
+default-theme             : keen

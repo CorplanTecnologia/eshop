@@ -1,0 +1,13 @@
+<!-- BEGIN SIDEBAR -->
+
+<div class="sidebar col-md-3 col-sm-4">
+    <h1>@(Categories)</h1>
+    <ul class="list-group margin-bottom-25 sidebar-menu">
+        @{foreach m in global.categories}
+        @{if m.count > 0 && !m.level}
+            <li class="list-group-item clearfix"><a href="@{sitemap_url('products')}@{m.linker}/"><i class="fa fa-angle-right"></i> @{m.name}</a></li>
+        @{fi}
+        @{end}
+    </ul>
+</div>
+<!-- END SIDEBAR -->

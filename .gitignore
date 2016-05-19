@@ -5,3 +5,4 @@ eshop/tmp/
 eshop-postgresql/tmp/
 eshop-mongodb/tmp/
 *.pid
+/eshop-mongodb/nbproject/private/
