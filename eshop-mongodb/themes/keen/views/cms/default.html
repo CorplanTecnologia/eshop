@@ -1,0 +1,77 @@
+@{notranslate}
+@{nocompress html}
+
+@{view('~/menutop')}
+
+<div class="main">
+    <div class="container">
+        <ul class="breadcrumb">
+            @{foreach m in sitemap()}
+            @{if m.id === 'category'}
+            @{sitemap_category(m.url, repository.category)}
+            @{else}
+            @{if m.last}
+            <li class="active">@{m.name}</li>
+            @{else}
+            <li><a href="@{m.url}">@{m.name}</a></li>
+            @{fi}
+            @{fi}
+            @{end}
+        </ul>
+
+
+        <!-- BEGIN SIDEBAR & CONTENT -->
+        <div class="row margin-bottom-40 ">
+            @{view('~/menuleft')}
+
+            <div class="col-md-9 col-sm-9">
+
+                <!-- ALL CMS CONTENT (FOR EDITOR) MUST BE WRAPPED IN <div id="CMS"> -->
+                <div id="CMS">
+
+                    @{if repository.preview}
+
+                    @{if repository.page && repository.page.body}
+
+                    <!-- RENDER UPDATED CONTENT -->
+                    @{!repository.page.body}
+
+                    @{else}
+
+                    <!-- DEFAULT CONTENT FOR NEW PAGES FO THIS TEMPLATE -->
+                    <div class="CMS_widgets"></div>
+
+                    @{fi}
+
+                    @{else}
+
+                    <!-- RENDERING FOR VISITORS -->
+                    <br />
+                    <br />
+                    <h1 class="nmb">@{repository.page.title}</h1>
+                    @{!repository.page.body}
+
+                    @{fi}
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@{view('~/footers')}
+
+<script>
+    function $cmseditor_load(type) {
+        // type === undefined  --> load new content
+        // type === sourcecode --> content changed
+    }
+
+    function $cmseditor_save(type) {
+        // type === undefined  --> save the content
+        // type === sourcecode --> get source-code
+
+        // changed the DOM
+        // DOM will be saved
+    }
+</script>

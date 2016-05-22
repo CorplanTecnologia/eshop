@@ -54,7 +54,7 @@ function view_products_category() {
 
 	options.category = self.req.path.slice(1).join('/');
 
-	var category = F.global.categories.find('linker', options.category);;
+	var category = F.global.categories.find('linker', options.category);
 	if (!category)
 		return self.throw404();
 
@@ -72,6 +72,7 @@ function view_products_category() {
 
 			self.repository.subcategories = F.global.categories.where('parent', options.category);
 			self.title(category.name);
+                        console.log(data, options);
 			self.view('products-category', data);
 		});
 	});
