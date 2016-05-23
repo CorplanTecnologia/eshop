@@ -3,6 +3,7 @@ homepage                 : @(Homepage)               --> /
 contact                  : @(Contact)                --> /contact/                    --> homepage
 products                 : @(Shop)                   --> /shop/                       --> homepage
 checkout                 : @(Checkout)               --> /checkout/                   --> homepage
+shopping-cart            : @(Shopping Cart)          --> /shopping-cart/              --> homepage
 order                    : @(Order)                  --> /checkout/{0}/               --> checkout
 payment                  : @(Checkout Payment)       --> /checkout/{0}/{1}/           --> checkout
 account                  : @(Account)                --> /account/                    --> homepage

@@ -12,6 +12,7 @@ exports.install = function() {
 
 	// ORDERS
 	F.route('#checkout');
+        F.route('#shopping-cart');
 	F.route('#order',            view_checkout, ['*Order']);
 	F.route('#payment',          process_payment_paypal, ['*Order']);
 
@@ -72,7 +73,6 @@ function view_products_category() {
 
 			self.repository.subcategories = F.global.categories.where('parent', options.category);
 			self.title(category.name);
-                        console.log(data, options);
 			self.view('products-category', data);
 		});
 	});

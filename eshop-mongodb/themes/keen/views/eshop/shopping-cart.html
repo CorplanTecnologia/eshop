@@ -1,0 +1,34 @@
+@{sitemap('shoppingcart')}
+
+@{view('~/menutop')}
+
+<div class="main">
+    <div class="container">
+        <ul class="breadcrumb">
+            @{foreach m in sitemap()}
+            @{if m.id === 'category'}
+            @{sitemap_category(m.url, repository.category)}
+            @{else}
+            @{if m.last}
+            <li class="active">@{m.name}</li>
+            @{else}
+            <li><a href="@{m.url}">@{m.name}</a></li>
+            @{fi}
+            @{fi}
+            @{end}
+        </ul>
+
+
+        <!-- BEGIN SIDEBAR & CONTENT -->
+        <div class="row margin-bottom-40 ">
+            <!-- BEGIN CONTENT -->
+            <div class="col-md-12 col-sm-12">
+                <h1>@{title}</h1>
+                @{view('partial-cart', model)}
+            </div>
+            <!-- END CONTENT -->
+        </div>
+    </div>
+</div>
+
+@{view('~/footers')}
