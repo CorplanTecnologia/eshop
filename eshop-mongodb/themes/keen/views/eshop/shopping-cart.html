@@ -2,6 +2,7 @@
 
 @{view('~/menutop')}
 
+<div id="loading"></div>
 <div class="main">
     <div class="container">
         <ul class="breadcrumb">
@@ -37,23 +38,23 @@
                                 </tr>
                             </thead>
                             <tbody data-component="repeater" data-component-path="datasource">
-                            <script type="text/html"/>
-                            <tr>
-                                <td><a href="{{ linker }}">{{ name }}</a><div class="visible-xs fs11 mt10">@(One piece:) @{currency('{{ price | format(2) }}')}</div></td>
-                                <td class="ui-right col-xs-2">@{currency('{{ price | format(2) }}')}</td>
-                                <td class="ui-right col-xs-2 col-sm-1 active"><input type="text" value="{{ count }}" data-id="{{ id }}" maxlength="2" /></td>
-                                <td class="ui-right col-xs-3 col-sm-2 b warning"><span class="visible-xs checkoutlist-label">@(Together:)</span><span class="checkoutlist-item-price" data-format="@{currency('{0}')}">@{currency('{{ price | sum(2) }}')}</span><span class="fa fa-times-circle hidden-xs" data-id="{{ id }}"></span></td>
-                            </tr>
+                            <script type="text/html">
+                                <tr>
+                                    <td><a href="{{ linker }}">{{ name }}</a><div class="visible-xs fs11 mt10">@(One piece:) @{currency('{{ price | format(2) }}')}</div></td>
+                                    <td class="ui-right col-xs-2">@{currency('{{ price | format(2) }}')}</td>
+                                    <td class="ui-right col-xs-2 col-sm-1 active"><input type="text" value="{{ count }}" data-id="{{ id }}" maxlength="2" /></td>
+                                    <td class="ui-right col-xs-3 col-sm-2 b warning"><span class="visible-xs checkoutlist-label">@(Together:)</span><span class="checkoutlist-item-price" data-format="@{currency('{0}')}">@{currency('{{ price | sum(2) }}')}</span><span class="fa fa-times-circle hidden-xs" data-id="{{ id }}"></span></td>
+                                </tr>
                             </script>
                             </tbody>
                             <tfoot data-component="template" data-component-path="summarize" class="hidden-xs">
-                            <script type="text/html"/>
-                            <tr class="active">
-                                <td class="b black">@(Summarize)</td>
-                                <td class="col-xs-2"></td>
-                                <td class="ui-center col-xs-2 col-sm-1 b black">{{ count }}x</td>
-                                <td class="ui-right col-xs-3 col-sm-2 b black">@{currency('{{ price | format(2) }}')}<span class="fa fa-calculator hidden-xs"></span></td>
-                            </tr>
+                            <script type="text/html">
+                                <tr class="active">
+                                    <td class="b black">@(Summarize)</td>
+                                    <td class="col-xs-2"></td>
+                                    <td class="ui-center col-xs-2 col-sm-1 b black">{{ count }}x</td>
+                                    <td class="ui-right col-xs-3 col-sm-2 b black">@{currency('{{ price | format(2) }}')}<span class="fa fa-calculator hidden-xs"></span></td>
+                                </tr>
                             </script>
                             </tfoot>
                         </table>
@@ -87,7 +88,7 @@
                                     </tr>
                                     <tr>
                                         <td class="goods-page-image">
-                                            <a href="javascript:;"><img src="assets/pages/img/products/model3.jpg" alt="Berry Lace Dress"></a>
+                                            <a href="javascript:;"><img src="/assets/pages/img/products/model3.jpg" alt="Berry Lace Dress"></a>
                                         </td>
                                         <td class="goods-page-description">
                                             <h3><a href="javascript:;">Cool green dress with red bell</a></h3>
@@ -114,7 +115,7 @@
                                     </tr>
                                     <tr>
                                         <td class="goods-page-image">
-                                            <a href="javascript:;"><img src="assets/pages/img/products/model4.jpg" alt="Berry Lace Dress"></a>
+                                            <a href="javascript:;"><img src="/assets/pages/img/products/model4.jpg" alt="Berry Lace Dress"></a>
                                         </td>
                                         <td class="goods-page-description">
                                             <h3><a href="javascript:;">Cool green dress with red bell</a></h3>
@@ -175,133 +176,132 @@
 @{section script}
 <script>
 
-	var common = {};
-	var form = {};
-	var datasource;
+    var common = {};
+    var form = {};
+    var datasource;
 
-	// Reads delivery types from the eshop configuration
-	SET('common.deliverytypes', '@{config.custom.deliverytypes.join(",")}'.split(','));
+    // Reads delivery types from the eshop configuration
+    SET('common.deliverytypes', '@{config.custom.deliverytypes.join(",")}'.split(','));
 
-	form.email = '@';
-	form.address = '';
-	form.isnewsletter = true;
+    form.email = '@';
+    form.address = '';
+    form.isnewsletter = true;
 
-	var userprofile = JSON.parse($('#userprofile').html());
-	if (userprofile) {
-		form.firstname = userprofile.firstname;
-		form.lastname = userprofile.lastname;
-		form.email = userprofile.email;
-	}
+    var userprofile = JSON.parse($('#userprofile').html());
+    if (userprofile) {
+        form.firstname = userprofile.firstname;
+        form.lastname = userprofile.lastname;
+        form.email = userprofile.email;
+    }
 
-	jC.ready(function() {
+    jC.ready(function () {
 
-		var cart = CACHE('cart');
-		if (!cart)
-			return;
+        var cart = CACHE('cart');
+        if (!cart)
+            return;
 
-		var id = [];
+        var id = [];
 
-		for (var i = 0, length = cart.length; i < length; i++)
-			id.push(cart[i].id);
+        for (var i = 0, length = cart.length; i < length; i++)
+            id.push(cart[i].id);
 
-		AJAX('GET /api/products/', { id: id.join(',') }, function(response) {
-                        console.log('shopping cart');
+        AJAX('GET /api/products/', {id: id.join(',')}, function (response) {
 
-			datasource = [];
+            datasource = [];
 
-			for (var i = 0, length = response.items.length; i < length; i++) {
-				var item = response.items[i];
-				datasource.push({ id: item.id, name: item.name, price: item.price, linker: item.linker, linker_category: item.linker_category, pictures: item.pictures, reference: item.reference });
-			}
+            for (var i = 0, length = response.items.length; i < length; i++) {
+                var item = response.items[i];
+                datasource.push({id: item.id, name: item.name, price: item.price, linker: item.linker, linker_category: item.linker_category, pictures: item.pictures, reference: item.reference});
+            }
 
-			if (!datasource.length)
-				FIND('checkout').clear();
+            if (!datasource.length)
+                FIND('checkout').clear();
 
-			refresh(true);
-		});
+            refresh(true);
+        });
 
-		$('.checkoutlist').on('change', 'input', function(e) {
-			var count = parseInt(this.value.match(/\d+/));
-			if (isNaN(count))
-				return;
+        $('.checkoutlist').on('change', 'input', function (e) {
+            var count = parseInt(this.value.match(/\d+/));
+            if (isNaN(count))
+                return;
 
-			var id = this.getAttribute('data-id');
-			var checkout = FIND('checkout');
-			var output = checkout.update(id, count);
+            var id = this.getAttribute('data-id');
+            var checkout = FIND('checkout');
+            var output = checkout.update(id, count);
 
-			if (!output) {
-				var el = $(this).closest('tr').find('.checkoutlist-item-price');
-				var item = checkout.get(id);
-				el.html(el.attr('data-format').format(Tangular.helpers.sum.call(item, item.price, 2)));
-			}
+            if (!output) {
+                var el = $(this).closest('tr').find('.checkoutlist-item-price');
+                var item = checkout.get(id);
+                el.html(el.attr('data-format').format(Tangular.helpers.sum.call(item, item.price, 2)));
+            }
 
-			refresh(output === 1);
-		});
+            refresh(output === 1);
+        });
 
-		$('.checkoutlist').on('click', '.fa-times-circle', function(e) {
-			var output = FIND('checkout').update($(this).attr('data-id'), 0);
-			refresh(output === 1);
-		});
-	});
+        $('.checkoutlist').on('click', '.fa-times-circle', function (e) {
+            var output = FIND('checkout').update($(this).attr('data-id'), 0);
+            refresh(output === 1);
+        });
+    });
 
-	Tangular.register('sum', function(value, format) {
-		return (value * this.count).format(format);
-	});
+    Tangular.register('sum', function (value, format) {
+        return (value * this.count).format(format);
+    });
 
-	function refresh(redraw) {
-		var cart = CACHE('cart');
-		var index = 0;
-		while (true) {
+    function refresh(redraw) {
+        var cart = CACHE('cart');
+        var index = 0;
+        while (true) {
 
-			var product = datasource[index++];
-			if (product === undefined)
-				break;
+            var product = datasource[index++];
+            if (product === undefined)
+                break;
 
-			var item = cart.findItem('id', product.id);
+            var item = cart.findItem('id', product.id);
 
-			if (!item) {
-				index--;
-				datasource.splice(index, 1);
-				continue;
-			}
+            if (!item) {
+                index--;
+                datasource.splice(index, 1);
+                continue;
+            }
 
-			product.count = item.count;
-		}
+            product.count = item.count;
+        }
 
-		var count = 0;
-		var price = 0;
-		for (var i = 0, length = datasource.length; i < length; i++) {
-			var product = datasource[i];
-			price += product.price * product.count;
-			count += product.count;
-		}
+        var count = 0;
+        var price = 0;
+        for (var i = 0, length = datasource.length; i < length; i++) {
+            var product = datasource[i];
+            price += product.price * product.count;
+            count += product.count;
+        }
 
-		if (redraw)
-			UPDATE('datasource');
-		SET('summarize', { count: count, price: price });
-	}
+        if (redraw)
+            UPDATE('datasource');
+        SET('summarize', {count: count, price: price});
+    }
 
-	OPERATION('submit', function() {
-		if (BLOCKED('submit', 3000))
-			return;
+    OPERATION('submit', function () {
+        if (BLOCKED('submit', 3000))
+            return;
 
-		form.products = datasource;
+        form.products = datasource;
 
-		RESET('form.*');
-		loading(true);
+        RESET('form.*');
+        loading(true);
 
-		AJAX('POST /api/checkout/create/', form, function(response) {
-			loading(false, 1000);
+        AJAX('POST /api/checkout/create/', form, function (response) {
+            loading(false, 1000);
 
-			if (!response.success) {
-				SET('common.success', response);
-				return;
-			}
+            if (!response.success) {
+                SET('common.success', response);
+                return;
+            }
 
-			FIND('checkout').clear();
-			location.href = jRouting.path(location.pathname) + response.value + '/?success=1';
-		});
-	});
+            FIND('checkout').clear();
+            location.href = jRouting.path(location.pathname) + response.value + '/?success=1';
+        });
+    });
 
 </script>
 @{end}

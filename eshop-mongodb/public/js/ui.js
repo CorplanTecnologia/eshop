@@ -488,8 +488,8 @@ COMPONENT('repeater', function() {
 	self.readonly();
 
 	self.make = function() {
-		var element = self.element.find('script');
-
+		var element = self.element.find('script').not('[id]');
+                
 		if (!element.length) {
 			element = self.element;
 			self.element = self.element.parent();
