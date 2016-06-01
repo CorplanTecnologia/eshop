@@ -112,10 +112,9 @@ COMPONENT('newsletter', function() {
 });
 
 COMPONENT('checkout', function() {
-
 	var self = this;
 	var expiration = ((1000 * 60) * 60) * 168; // Valid for 7 days
-	var currency = self.attr('data-currency');
+	var currency = self.element.find(".total").attr('data-currency');
 
 	self.make = function() {
 		self.refresh();
@@ -210,7 +209,8 @@ COMPONENT('checkout', function() {
 
 		var cart = CACHE('cart');
 		if (!cart || !cart.length) {
-			self.element.html(currency.format('0.00'));
+                        self.element.find(".total").html(currency.format('0.00'));
+                        self.element.find(".count").html("0 item");
 			return;
 		}
 
@@ -222,7 +222,8 @@ COMPONENT('checkout', function() {
 			count += cart[i].count;
 		}
 
-		self.element.html(currency.format(sum.format(2)));
+		self.element.find(".total").html(currency.format(sum.format(2)));
+                self.element.find(".count").html(count + " items");
 	};
 });
 
