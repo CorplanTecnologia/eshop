@@ -186,7 +186,8 @@ COMPONENT('checkout', function() {
 
 		CACHE('cart', cart, expiration);
 		self.refresh(removed ? 1 : 0);
-		return removed ? 1 : 0;
+                return 1;
+		//return removed ? 1 : 0;
 	};
 
 	self.clear = function() {
