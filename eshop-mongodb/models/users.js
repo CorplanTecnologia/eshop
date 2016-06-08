@@ -330,7 +330,8 @@ NEWSCHEMA('UserPassword').make(function(schema) {
 
 			response.hash = F.encrypt({ id: response.id, expire: new Date().add('2 days').getTime() });
 			F.mail(model.email, '@(Password recovery)', '=?/mails/password', response, options.controller.language || '');
-			callback(SUCCESS(true));
+                        console.log(response);
+                        callback(SUCCESS(true));
 		});
 	});
 });

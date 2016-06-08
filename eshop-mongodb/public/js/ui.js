@@ -325,11 +325,15 @@ COMPONENT('textbox', function() {
 		var icon = self.attr('data-icon');
 		var icon2 = self.attr('data-control-icon');
 		var increment = self.attr('data-increment') === 'true';
+                var id = self.attr('data-component-id');
+                
+                if(id)
+                    attrs.attr('id', id);
 
 		if (!icon2 && self.type === 'date')
 			icon2 = 'fa-calendar';
 
-		builder.push('<input {0} />'.format(attrs.join(' ')));
+		builder.push('<input {0} class="form-control"/>'.format(attrs.join(' ')));
 
 		if (icon2)
 			builder.push('<div><span class="fa {0}"></span></div>'.format(icon2));
@@ -369,13 +373,14 @@ COMPONENT('textbox', function() {
 
 		var html = builder.join('');
 		builder = [];
-		builder.push('<div class="ui-textbox-label{0}">'.format(required ? ' ui-textbox-label-required' : ''));
+                builder.push('<div class="form-group">');
+		builder.push('<label class="ui-textbox-label{0}" {1}>'.format(required ? ' ui-textbox-label-required' : '', id ? ' for="'+ id + '"':''));
 
 		if (icon)
 			builder.push('<span class="fa {0}"></span> '.format(icon));
 
 		builder.push(content);
-		builder.push(':</div><div class="ui-textbox">{0}</div>'.format(html));
+		builder.push(':</label>{0}'.format(html));
 
 		self.html(builder.join(''));
 		self.element.addClass('ui-textbox-container');
