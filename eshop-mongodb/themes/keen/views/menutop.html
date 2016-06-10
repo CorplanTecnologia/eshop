@@ -1,55 +1,4 @@
-<div data-component="cookie" class="hidden">@(This site uses cookies for visitor statistics. By continuing to browse the site you are agreeing to our use of cookies.) <a href="/privacy/">@(Privacy Policy)</a></div>
-<div data-component="message" data-button="@(Close)"></div>
-
-<!-- BEGIN TOP BAR -->
-<div class="pre-header">
-    <div class="container">
-        <div class="row">
-            <!-- BEGIN TOP BAR LEFT PART -->
-            <div class="col-md-6 col-sm-6 additional-shop-info">
-                <ul class="list-unstyled list-inline">
-                    <li><i class="fa fa-phone"></i><span>+1 456 6717</span></li>
-                    <!-- BEGIN CURRENCIES -->
-                    <li class="shop-currencies">
-                        <a href="javascript:void(0);">€</a>
-                        <a href="javascript:void(0);">£</a>
-                        <a href="javascript:void(0);" class="current">$</a>
-                    </li>
-                    <!-- END CURRENCIES -->
-                    <!-- BEGIN LANGS -->
-                    <li class="langs-block">
-                        <a href="javascript:void(0);" class="current">English </a>
-                        <div class="langs-block-others-wrapper"><div class="langs-block-others">
-                                <a href="javascript:void(0);">French</a>
-                                <a href="javascript:void(0);">Germany</a>
-                                <a href="javascript:void(0);">Turkish</a>
-                            </div></div>
-                    </li>
-                    <!-- END LANGS -->
-                </ul>
-            </div>
-            <!-- END TOP BAR LEFT PART -->
-            <!-- BEGIN TOP BAR MENU -->
-            <div class="col-md-6 col-sm-6 additional-nav">
-                <ul class="list-unstyled list-inline pull-right">
-                    @{if global.navigations.searchbar}
-                    @{foreach m in global.navigations.searchbar}
-                    <li><a href="@{m.url}">@{m.name}</a></li>
-                    @{end}
-                    @{fi}
-                    @{if user}
-                    <li><a href="@{sitemap_url('account')}" class="b">@{user.name}</a></li>
-                    <li><a href="@{sitemap_url('account')}logoff/" class="red">@(Sign out)</a></li>
-                    @{else}
-                    <li><a href="@{sitemap_url('account')}" class="b">@(Log In)</a></li>
-                    @{fi}
-                </ul>
-            </div>
-            <!-- END TOP BAR MENU -->
-        </div>
-    </div>        
-</div>
-<!-- END TOP BAR -->
+@{view('~/menutop0')}
 
 <!-- BEGIN HEADER -->
 <div class="header">
@@ -70,181 +19,181 @@
                 <div class="top-cart-content checkoutlist">
                     <ul class="scroller" style="height: 250px;" data-component="repeater" data-component-path="datasource">
                         <script type="text/html">
-                        <li>
-                            <a href="{{ linker }}"><img src="/images/small/{{pictures[0]}}.jpg" alt="{{ name }}" width="37" height="34"></a>
-                            <span class="cart-content-count">x {{ count }}</span>
-                            <strong><a href="{{ linker }}">{{ name }}</a></strong>
-                            <em>@{currency('{{ price | format(2) }}')}</em>
-                            <a class="del-goods" data-id="{{ id }}">&nbsp;</a>
-                        </li>
-                        </script>
-                    </ul>
-                    <div class="text-right">
-                        <a href="@{sitemap_url('shopping-cart')}" class="btn btn-default">@(View Cart)</a>
-                        <a href="@{sitemap_url('checkout')}" class="btn btn-primary">@(Checkout)</a>
+                            <li>
+                                <a href="{{ linker }}"><img src="/images/small/{{pictures[0]}}.jpg" alt="{{ name }}" width="37" height="34"></a>
+                                <span class="cart-content-count">x {{ count }}</span>
+                                <strong><a href="{{ linker }}">{{ name }}</a></strong>
+                                <em>@{currency('{{ price | format(2) }}')}</em>
+                                <a class="del-goods" data-id="{{ id }}">&nbsp;</a>
+                            </li>
+                            </script>
+                        </ul>
+                        <div class="text-right">
+                            <a href="@{sitemap_url('shopping-cart')}" class="btn btn-default">@(View Cart)</a>
+                            <a href="@{sitemap_url('checkout')}" class="btn btn-primary">@(Checkout)</a>
+                        </div>
                     </div>
-                </div>
-            </div>            
-        </div>
-        <!--END CART -->
+                </div>            
+            </div>
+            <!--END CART -->
 
-        <div class="col-md-8 padding-top-30">
-            <form action="@{sitemap_url('products')}" method="GET">
-                <div class="input-group search">
-                    <input placeholder="@(Search items ...)" value="@{query.q}" autofocus="autofocus" class="form-control" type="text" name="q">
-                    <span class="input-group-btn">
-                        <button class="btn btn-primary" type="submit">Search</button>
-                    </span>
-                </div>
-            </form>
+            <div class="col-md-8 padding-top-30">
+                <form action="@{sitemap_url('products')}" method="GET">
+                    <div class="input-group search">
+                        <input placeholder="@(Search items ...)" value="@{query.q}" autofocus="autofocus" class="form-control" type="text" name="q">
+                        <span class="input-group-btn">
+                            <button class="btn btn-primary" type="submit">Search</button>
+                        </span>
+                    </div>
+                </form>
+            </div>
+            <!-- END NAVIGATION -->
         </div>
-        <!-- END NAVIGATION -->
     </div>
-</div>
-<!-- Header END -->
+    <!-- Header END -->
 
-<!-- Stores the current user data (JSON) -->
-        @{json(user, 'userprofile')}
+    <!-- Stores the current user data (JSON) -->
+    @{json(user, 'userprofile')}
 
-        @{section script}
-        <script>
+    @{section script}
+    <script>
 
-            var common = {};
-            var form = {};
-            var datasource;
+        var common = {};
+        var form = {};
+        var datasource;
 
-            // Reads delivery types from the eshop configuration
-            SET('common.deliverytypes', '@{config.custom.deliverytypes.join(",")}'.split(','));
+        // Reads delivery types from the eshop configuration
+        SET('common.deliverytypes', '@{config.custom.deliverytypes.join(",")}'.split(','));
 
-            form.email = '@';
-            form.address = '';
-            form.isnewsletter = true;
+        form.email = '@';
+        form.address = '';
+        form.isnewsletter = true;
 
-            var userprofile = JSON.parse($('#userprofile').html());
-            if (userprofile) {
-                form.firstname = userprofile.firstname;
-                form.lastname = userprofile.lastname;
-                form.email = userprofile.email;
-            }
+        var userprofile = JSON.parse($('#userprofile').html());
+        if (userprofile) {
+            form.firstname = userprofile.firstname;
+            form.lastname = userprofile.lastname;
+            form.email = userprofile.email;
+        }
 
-            jC.ready(function () {
+        jC.ready(function () {
 
-                var cart = CACHE('cart');
-                if (!cart)
-                    return;
+            var cart = CACHE('cart');
+            if (!cart)
+                return;
 
-                var id = [];
+            var id = [];
 
-                for (var i = 0, length = cart.length; i < length; i++)
-                    id.push(cart[i].id);
+            for (var i = 0, length = cart.length; i < length; i++)
+                id.push(cart[i].id);
 
-                AJAX('GET /api/products/', {id: id.join(',')}, function (response) {
+            AJAX('GET /api/products/', {id: id.join(',')}, function (response) {
 
-                    datasource = [];
+                datasource = [];
 
-                    for (var i = 0, length = response.items.length; i < length; i++) {
-                        var item = response.items[i];
-                        datasource.push({id: item.id, name: item.name, price: item.price, linker: item.linker, linker_category: item.linker_category, pictures: item.pictures, reference: item.reference});
-                    }
-
-                    if (!datasource.length)
-                        FIND('checkout').clear();
-
-                    refresh(true);
-                });
-
-                $('.checkoutlist').on('click', '.btn', function (e) {
-                    //console.log($(this).hasClass("quantity-down"));
-                    //return console.log(this);
-                    var count = parseInt($(this).closest('tr').find('#product-quantity').val());
-                    if (isNaN(count))
-                        return;
-
-                    if ($(this).hasClass("quantity-down") && count > 0)
-                        count--;
-                    else if ($(this).hasClass("quantity-up"))
-                        count++;
-
-                    var id = this.getAttribute('data-id');
-                    var checkout = FIND('checkout');
-                    var output = checkout.update(id, count);
-
-                    if (!output) {
-                        var el = $(this).closest('tr').find('.checkoutlist-item-price');
-                        var item = checkout.get(id);
-                        el.html(el.attr('data-format').format(Tangular.helpers.sum.call(item, item.price, 2)));
-
-                        var el = $(this).closest('tr').find('#product-quantity');
-                        el.val(count);
-                    }
-
-                    refresh(output === 1);
-                });
-
-                $('.checkoutlist').on('click', '.del-goods', function (e) {
-                    var output = FIND('checkout').update($(this).attr('data-id'), 0);
-                    refresh(output === 1);
-                });
-            });
-
-            Tangular.register('sum', function (value, format) {
-                return (value * this.count).format(format);
-            });
-
-            function refresh(redraw) {
-                var cart = CACHE('cart');
-                var index = 0;
-                while (true) {
-
-                    var product = datasource[index++];
-                    if (product === undefined)
-                        break;
-
-                    var item = cart.findItem('id', product.id);
-
-                    if (!item) {
-                        index--;
-                        datasource.splice(index, 1);
-                        continue;
-                    }
-
-                    product.count = item.count;
+                for (var i = 0, length = response.items.length; i < length; i++) {
+                    var item = response.items[i];
+                    datasource.push({id: item.id, name: item.name, price: item.price, linker: item.linker, linker_category: item.linker_category, pictures: item.pictures, reference: item.reference});
                 }
 
-                var count = 0;
-                var price = 0;
-                for (var i = 0, length = datasource.length; i < length; i++) {
-                    var product = datasource[i];
-                    price += product.price * product.count;
-                    count += product.count;
-                }
-
-                if (redraw)
-                    UPDATE('datasource');
-                SET('summarize', {count: count, price: price});
-            }
-
-            OPERATION('submit', function () {
-                if (BLOCKED('submit', 3000))
-                    return;
-
-                form.products = datasource;
-
-                RESET('form.*');
-                loading(true);
-
-                AJAX('POST /api/checkout/create/', form, function (response) {
-                    loading(false, 1000);
-
-                    if (!response.success) {
-                        SET('common.success', response);
-                        return;
-                    }
-
+                if (!datasource.length)
                     FIND('checkout').clear();
-                    location.href = jRouting.path(location.pathname) + response.value + '/?success=1';
-                });
+
+                refresh(true);
             });
 
-        </script>
-        @{end}
+            $('.checkoutlist').on('click', '.btn', function (e) {
+                //console.log($(this).hasClass("quantity-down"));
+                //return console.log(this);
+                var count = parseInt($(this).closest('tr').find('#product-quantity').val());
+                if (isNaN(count))
+                    return;
+
+                if ($(this).hasClass("quantity-down") && count > 0)
+                    count--;
+                else if ($(this).hasClass("quantity-up"))
+                    count++;
+
+                var id = this.getAttribute('data-id');
+                var checkout = FIND('checkout');
+                var output = checkout.update(id, count);
+
+                if (!output) {
+                    var el = $(this).closest('tr').find('.checkoutlist-item-price');
+                    var item = checkout.get(id);
+                    el.html(el.attr('data-format').format(Tangular.helpers.sum.call(item, item.price, 2)));
+
+                    var el = $(this).closest('tr').find('#product-quantity');
+                    el.val(count);
+                }
+
+                refresh(output === 1);
+            });
+
+            $('.checkoutlist').on('click', '.del-goods', function (e) {
+                var output = FIND('checkout').update($(this).attr('data-id'), 0);
+                refresh(output === 1);
+            });
+        });
+
+        Tangular.register('sum', function (value, format) {
+            return (value * this.count).format(format);
+        });
+
+        function refresh(redraw) {
+            var cart = CACHE('cart');
+            var index = 0;
+            while (true) {
+
+                var product = datasource[index++];
+                if (product === undefined)
+                    break;
+
+                var item = cart.findItem('id', product.id);
+
+                if (!item) {
+                    index--;
+                    datasource.splice(index, 1);
+                    continue;
+                }
+
+                product.count = item.count;
+            }
+
+            var count = 0;
+            var price = 0;
+            for (var i = 0, length = datasource.length; i < length; i++) {
+                var product = datasource[i];
+                price += product.price * product.count;
+                count += product.count;
+            }
+
+            if (redraw)
+                UPDATE('datasource');
+            SET('summarize', {count: count, price: price});
+        }
+
+        OPERATION('submit', function () {
+            if (BLOCKED('submit', 3000))
+                return;
+
+            form.products = datasource;
+
+            RESET('form.*');
+            loading(true);
+
+            AJAX('POST /api/checkout/create/', form, function (response) {
+                loading(false, 1000);
+
+                if (!response.success) {
+                    SET('common.success', response);
+                    return;
+                }
+
+                FIND('checkout').clear();
+                location.href = jRouting.path(location.pathname) + response.value + '/?success=1';
+            });
+        });
+
+    </script>
+    @{end}

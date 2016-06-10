@@ -435,7 +435,7 @@ COMPONENT('textarea', function() {
 		var height = element.attr('data-height');
 		var icon = element.attr('data-icon');
 		var content = element.html();
-		var html = '<textarea data-component-bind=""' + (attrs.length > 0 ? ' ' + attrs.join('') : '') + (height ? ' style="height:' + height + '"' : '') + (element.attr('data-autofocus') === 'true' ? ' autofocus="autofocus"' : '') + '></textarea>';
+		var html = '<textarea class="ui-textarea form-control" data-component-bind=""' + (attrs.length > 0 ? ' ' + attrs.join('') : '') + (height ? ' style="height:' + height + '"' : '') + (element.attr('data-autofocus') === 'true' ? ' autofocus="autofocus"' : '') + '></textarea>';
 
 		if (content.length === 0) {
 			element.addClass('ui-textarea');
@@ -444,8 +444,13 @@ COMPONENT('textarea', function() {
 		}
 
 		element.empty();
-		element.append('<div class="ui-textarea-label' + (isRequired ? ' ui-textarea-label-required' : '') + '">' + (icon ? '<span class="fa ' + icon + '"></span> ' : '') + content + ':</div>');
-		element.append('<div class="ui-textarea">' + html + '</div>');
+                
+                var builder = [];
+                builder.push('<div class="form-group">');
+		builder.push('<label class="' + (isRequired ? ' ui-textarea-label-required' : '') + '">' + (icon ? '<span class="fa ' + icon + '"></span> ' : '') + content + ':</label>');
+		builder.push(html);
+                builder.push('</div>');
+                self.html(builder.join(''));
 	};
 
 	self.state = function(type) {
