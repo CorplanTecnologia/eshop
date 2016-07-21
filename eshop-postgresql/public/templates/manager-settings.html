@@ -140,6 +140,10 @@
 				<div data-component="textboxtags" data-component-path="settings.form.posts">@(Posts categories)</div>
 				<div class="help">@(Posts must be rendered manually in the layout or view. Categories: <code>F.global.posts</code>)</div>
 			</div>
+			<div class="col-md-6 m">
+				<div data-component="textboxtags" data-component-path="settings.form.languages">@(Supported languages)</div>
+				<div class="help">@(E.g. <code>en</code> <code>sk</code> <code>ru</code>)</div>
+			</div>
 		</div>
 		<br />
 	</div>
@@ -233,6 +237,9 @@ settings.cache = {};
 function settings_refresh() {
 	AJAX('GET {0}/api/settings/'.format(managerurl), function(response) {
 
+		if (isError(arguments))
+			return;
+
 		if (response.users)
 			response.users = { items: response.users, page: 1, count: response.users.length, pages: 1, limit: 100 };
 		else
@@ -253,6 +260,9 @@ function settings_save() {
 
 	var loading = FIND('loading').show();
 	AJAX('PUT {0}/api/settings/'.format(managerurl), settings.form, function() {
+
+		if (isError(arguments))
+			return;
 
 		success(true);
 		RESET('settings.form.*');

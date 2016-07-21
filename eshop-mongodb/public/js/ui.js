@@ -1,27 +1,34 @@
 COMPONENT('click', function() {
 	var self = this;
 
+	self.readonly();
+
+	self.click = function() {
+		var value = self.attr('data-value');
+		if (typeof(value) === 'string')
+			self.set(self.parser(value));
+		else
+			self.get(self.attr('data-component-path'))(self);
+	};
+
 	self.make = function() {
 
-		self.element.on('click', function() {
-			self.get(self.attr('data-component-path'))();
-		});
+		self.element.on('click', self.click);
 
 		var enter = self.attr('data-enter');
 		if (!enter)
 			return;
+
 		$(enter).on('keydown', 'input', function(e) {
 			if (e.keyCode !== 13)
 				return;
 			setTimeout(function() {
-				if (self.element.get(0).disabled === true)
+				if (self.element.get(0).disabled)
 					return;
-				self.get(self.attr('data-component-path'))();
+				self.click();
 			}, 100);
 		});
 	};
-
-	self.readonly();
 });
 
 COMPONENT('visible', function() {
@@ -865,11 +872,13 @@ COMPONENT('form', function() {
 
 	var self = this;
 	var autocenter;
+	window.$$form_level = window.$$form_level || 1;
 
 	if (!MAN.$$form) {
 		MAN.$$form = true;
 		$(document).on('click', '.ui-form-button-close', function() {
 			SET($.components.findById($(this).attr('data-id')).path, '');
+			window.$$form_level--;
 		});
 
 		$(window).on('resize', function() {
@@ -879,11 +888,13 @@ COMPONENT('form', function() {
 				component.resize();
 			});
 		});
-
 	}
+
+	self.onHide = function(){};
 
 	var hide = self.hide = function() {
 		self.set('');
+		self.onHide();
 	};
 
 	self.readonly();
@@ -914,7 +925,7 @@ COMPONENT('form', function() {
 		self.condition = self.attr('data-if');
 		self.element.empty();
 
-		$(document.body).append('<div id="' + self._id + '" class="hidden ui-form-container"' + (self.attr('data-top') ? ' style="z-index:10"' : '') + '><div class="ui-form-container-padding"><div class="ui-form" style="max-width:' + width + '"><div class="ui-form-title"><span class="fa fa-times ui-form-button-close" data-id="' + self.id + '"></span>' + self.attr('data-title') + '</div>' + content + '</div></div>');
+		$(document.body).append('<div id="' + self._id + '" class="hidden ui-form-container"><div class="ui-form-container-padding"><div class="ui-form" style="max-width:' + width + '"><div class="ui-form-title"><span class="fa fa-times ui-form-button-close" data-id="' + self.id + '"></span>' + self.attr('data-title') + '</div>' + content + '</div></div>');
 
 		self.element = $('#' + self._id);
 		self.element.data(COM_ATTR, self);
@@ -925,6 +936,7 @@ COMPONENT('form', function() {
 		});
 
 		self.element.find('button').on('click', function(e) {
+			window.$$form_level--;
 			switch (this.name) {
 				case 'submit':
 					self.submit(hide);
@@ -965,6 +977,9 @@ COMPONENT('form', function() {
 			if (el.length > 0)
 				el.eq(0).focus();
 
+			window.$$form_level++;
+			self.element.css('z-index', window.$$form_level * 10);
+
 			self.element.animate({ scrollTop: 0 }, 0, function() {
 				setTimeout(function() {
 					self.element.find('.ui-form').addClass('ui-form-animate');
@@ -981,12 +996,11 @@ COMPONENT('pictures', function() {
 	var self = this;
 
 	self.skip = false;
+	self.readonly();
 
 	self.make = function() {
 		self.element.addClass('ui-pictures');
 	};
-
-	self.readonly();
 
 	self.setter = function(value) {
 
@@ -1002,16 +1016,20 @@ COMPONENT('pictures', function() {
 		this.element.find('img').unbind('click');
 		this.element.empty();
 
-		if (!(value instanceof Array) || value.length === 0)
+		if (!(value instanceof Array) || !value.length)
 			return;
+
+		var count = 0;
+		var builder = [];
 
 		for (var i = 0, length = value.length; i < length; i++) {
 			var id = value[i];
-			if (id)
-				this.element.append('<div data-id="' + id + '" class="col-xs-3 m"><span class="fa fa-times"></span><img src="/images/small/' + id + '.jpg" class="img-responsive" alt="" /></div>');
+			id && builder.push('<div data-id="' + id + '" class="col-xs-3 m"><span class="fa fa-times"></span><img src="/images/small/{0}.jpg" class="img-responsive" alt="" /></div>'.format(id));
 		}
 
-		var self = this;
+		self.html(builder);
+		setTimeout(FN('() => $(window).trigger("resize");'), 500);
+
 		this.element.find('.fa').bind('click', function(e) {
 
 			var el = $(this).parent().remove();
@@ -1032,7 +1050,7 @@ COMPONENT('pictures', function() {
 
 			el.toggleClass('selected');
 
-			if (selected.length === 0)
+			if (!selected.length)
 				return;
 
 			var id1 = el.parent().attr('data-id');

@@ -3,11 +3,10 @@
  * @author Peter Širka
  */
 
-var COOKIE = '__webcounter';
-var REG_ROBOT = /search|agent|bot|crawler/i;
-var TIMEOUT_VISITORS = 1200; // 20 MINUTES
-
-require('sqlagent');
+const COOKIE = '__webcounter';
+const REG_ROBOT = /search|agent|bot|crawler/i;
+const REG_HOSTNAME = /(http|https)\:\/\/(www\.)/gi;
+const TIMEOUT_VISITORS = 1200; // 20 MINUTES
 
 function WebCounter() {
 	this.stats = { pages: 0, day: 0, month: 0, year: 0, hits: 0, unique: 0, uniquemonth: 0, count: 0, search: 0, direct: 0, social: 0, unknown: 0, advert: 0, mobile: 0, desktop: 0, visitors: 0, robots: 0 };
@@ -17,7 +16,7 @@ function WebCounter() {
 	this.current = 0;
 	this.last = 0;
 	this.lastvisit = null;
-	this.social = ['plus.url.google', 'plus.google', 'twitter', 'facebook', 'linkedin', 'tumblr', 'flickr', 'instagram', 'vkontakte'];
+	this.social = ['plus.url.google', 'plus.google', 'twitter', 'facebook', 'linkedin', 'tumblr', 'flickr', 'instagram', 'vkontakte', 'snapchat', 'skype', 'whatsapp', 'wechat'];
 	this.search = ['google', 'bing', 'yahoo', 'duckduckgo', 'yandex'];
 	this.ip = [];
 	this.url = [];
@@ -65,7 +64,7 @@ WebCounter.prototype = {
 
 	get today() {
 		var self = this;
-		var stats = utils.copy(self.stats);
+		var stats = U.copy(self.stats);
 		stats.last = self.lastvisit;
 		stats.pages = stats.hits && stats.count ? (stats.hits / stats.count).floor(2) : 0;
 		return stats;
@@ -154,17 +153,7 @@ WebCounter.prototype.increment = function(type) {
 WebCounter.prototype.counter = function(req, res) {
 
 	var self = this;
-
-	if (!self._onValid(req))
-		return false;
-
-	if (req.xhr && !self.allowXHR)
-		return false;
-
-	if (req.method !== 'GET')
-		return false;
-
-	if (!req.headers['accept'] || !req.headers['accept-language'])
+	if (!self._onValid(req) || req.method !== 'GET' || (req.xhr && !self.allowXHR) || !req.headers['accept'] || !req.headers['accept-language'])
 		return false;
 
 	var arr = self.arr;
@@ -244,25 +233,21 @@ WebCounter.prototype.counter = function(req, res) {
 		return true;
 	}
 
-	referer = getReferer(referer);
+	referer = getReferrer(referer);
 
 	if (!referer || (webcounter.hostname && referer.indexOf(webcounter.hostname) !== -1)) {
 		stats.direct++;
 		return true;
 	}
 
-	var length = self.social.length;
-
-	for (var i = 0; i < length; i++) {
+	for (var i = 0, length = self.social.length; i < length; i++) {
 		if (referer.indexOf(self.social[i]) !== -1) {
 			stats.social++;
 			return true;
 		}
 	}
 
-	var length = self.search.length;
-
-	for (var i = 0; i < length; i++) {
+	for (var i = 0, length = self.search.length; i < length; i++) {
 		if (referer.indexOf(self.search[i]) !== -1) {
 			stats.search++;
 			return true;
@@ -376,14 +361,18 @@ WebCounter.prototype.daily = function(callback) {
 WebCounter.prototype.monthly = function(callback) {
 	var self = this;
 	self.statistics(function(arr) {
+
+		if (!arr.length)
+			return callback(EMPTYOBJECT);
+
 		var stats = {};
 		for (var i = 0, length = arr.length; i < length; i++) {
 			var current = arr[i];
 			var key = current.month + '-' + current.year;
-			if (!stats[key])
-				stats[key] = current;
-			else
+			if (stats[key])
 				sum(stats[key], current);
+			else
+				stats[key] = current;
 		}
 		callback(stats);
 	});
@@ -398,15 +387,20 @@ WebCounter.prototype.monthly = function(callback) {
 WebCounter.prototype.yearly = function(callback) {
 	var self = this;
 	self.statistics(function(arr) {
+
+		if (!arr.length)
+			return callback(EMPTYOBJECT);
+
 		var stats = {};
 		for (var i = 0, length = arr.length; i < length; i++) {
 			var current = arr[i];
 			var key = current.year.toString();
-			if (!stats[key])
-				stats[key] = current;
-			else
+			if (stats[key])
 				sum(stats[key], current);
+			else
+				stats[key] = current;
 		}
+
 		callback(stats);
 	});
 	return self;
@@ -421,10 +415,7 @@ WebCounter.prototype.statistics = function(callback) {
 	var self = this;
 	var nosql = DB();
 
-	nosql.select('stats').make(function(builder) {
-		builder.where('_id', '>', 0);
-	});
-
+	nosql.select('stats').make((builder) => builder.where('_id', '>', 0));
 	nosql.exec(function(err, response) {
 		if (err)
 			F.error(err);
@@ -450,9 +441,7 @@ WebCounter.prototype.refreshURL = function(referer, req) {
 	if (!self.allowIP)
 		return;
 
-	var length = self.ip.length;
-
-	for (var i = 0; i < length; i++) {
+	for (var i = 0, length = self.ip.length; i < length; i++) {
 		var item = self.ip[i];
 		if (item.ip === req.ip && item.url === referer) {
 			item.url = req.headers['x-ping'] || req.uri.href;
@@ -471,14 +460,14 @@ function sum(a, b) {
 			return;
 		}
 
-		if (typeof(a[o]) === 'undefined')
+		if (a[o] === undefined)
 			a[o] = 0;
-		if (typeof(b[o]) !== 'undefined')
+		if (b[o] !== undefined)
 			a[o] += b[o];
 	});
 }
 
-function getReferer(host) {
+function getReferrer(host) {
 	if (!host)
 		return null;
 	var index = host.indexOf('/') + 2;
@@ -494,10 +483,10 @@ var delegate_request = function(controller, name) {
 };
 
 module.exports.name = 'webcounter';
-module.exports.version = 'v3.0.0';
+module.exports.version = 'v3.1.0';
 module.exports.instance = webcounter;
 
-framework.on('controller', delegate_request);
+F.on('controller', delegate_request);
 
 function refresh_hostname() {
 	var url;
@@ -507,7 +496,7 @@ function refresh_hostname() {
 		url = F.config.url || F.config.hostname;
 	if (!url)
 		return;
-	url = url.toString().replace(/(http|https)\:\/\/(www\.)/gi, '');
+	url = url.toString().replace(REG_HOSTNAME, '');
 	var index = url.indexOf('/');
 	if (index !== -1)
 		url = url.substring(0, index);
@@ -523,7 +512,7 @@ module.exports.install = function() {
 };
 
 module.exports.usage = function() {
-	var stats = utils.extend({}, webcounter.stats);
+	var stats = U.extend({}, webcounter.stats);
 	stats.online = webcounter.online;
 	return stats;
 };

@@ -8,11 +8,15 @@
 			</div>
 			<div class="col-md-3 col-sm-6 m">
 				<div data-component="dropdown" data-component-path="pages.filter.navigation" data-source="pages.dependencies.navigations" data-empty="@(All pages)"></div>
+				<div>&nbsp;</div>
 			</div>
-			<div class="col-md-6 m">
+			<div class="col-md-2 col-sm-6 m">
+				<div data-component="dropdown" data-component-path="pages.filter.language" data-source="languages" data-empty="@(All languages)"></div>
+			</div>
+			<div class="col-md-4 col-sm-6 m">
 				<div class="row">
-					<div class="col-xs-4"><a href="javascript:void(0)" data-component="click" data-component-path="pages_new" class="linkbutton"><span class="fa fa-file-text"></span>@(Add new page)</a></div>
-					<div class="col-xs-4"><a href="javascript:void(0)" data-component="click" data-component-path="widgets_new" class="linkbutton"><span class="fa fa-plug"></span>@(Add new widget)</a></div>
+					<div class="col-xs-6"><a href="javascript:void(0)" data-component="click" data-component-path="pages_new" class="linkbutton"><span class="fa fa-file-text"></span>@(Add new page)</a></div>
+					<div class="col-xs-6"><a href="javascript:void(0)" data-component="click" data-component-path="widgets_new" class="linkbutton"><span class="fa fa-plug"></span>@(Add new widget)</a></div>
 				</div>
 			</div>
 		</div>
@@ -127,7 +131,7 @@
 				<div class="help">@(Affects navigation ordering.)</div>
 			</div>
 			<div class="col-md-2 m">
-				<div data-component="textbox" data-component-path="pages.form.language" data-align="center" data-maxlength="2" data-icon="fa-flag" data-placeholder="@(e.g. en)">@(Language)</div>
+				<div data-component="dropdown" data-component-path="pages.form.language" data-align="center" data-maxlength="2" data-icon="fa-flag" data-source="languages" data-empty="">@(Language)</div>
 			</div>
 			<div class="col-md-2 m">
 				<div data-component="textbox" data-component-path="pages.form.icon" data-align="center" data-maxlength="20" data-placeholder="e.g. home" data-icon="fa-camera">@(Icon)</div>
@@ -185,7 +189,7 @@
 	</div>
 </div>
 
-<div data-component="form" data-title="@(Create custom HTML content)" data-component-path="pages.window" data-if="value === 'html'" data-width="1100px" data-top="true" data-component-id="pages.html">
+<div data-component="form" data-title="@(Create custom HTML content)" data-component-path="pages.window" data-if="value === 'html'" data-width="1100px" data-component-id="pages.html">
 	<div class="padding">
 		<div class="row">
 			<div class="col-md-12">
@@ -243,6 +247,10 @@
 							return;
 						var loading = FIND('loading').show(true);
 						AJAX('DELETE {0}/api/pages'.format(managerurl), { id: row.id }, function() {
+
+							if (isError(arguments))
+								return;
+
 							loading.hide(500);
 							pages_refresh();
 							setTimeout(pages_refresh_sitemap, 2000);
@@ -280,6 +288,9 @@
 				}
 
 				AJAX('POST {0}/api/pages/'.format(managerurl), pages.form, function(response) {
+
+					if (isError(arguments))
+						return;
 
 					// Error handling
 					SET('pages.response', response);
@@ -319,7 +330,10 @@
 
 	function pages_edit(id) {
 		var loading = FIND('loading').show();
-		AJAX('GET {0}/api/pages/{1}/'.format(managerurl, id), function(response, err) {
+		AJAX('GET {0}/api/pages/{1}/'.format(managerurl, id), function(response) {
+
+			if (isError(arguments))
+				return;
 
 			loading.hide(500);
 
@@ -348,6 +362,9 @@
 			pages.filter.page = 1;
 		AJAX('GET {0}/api/pages/'.format(managerurl), pages.filter, function(response) {
 
+			if (isError(arguments))
+				return;
+
 			if (pages.filter.navigation) {
 				// Sorts pages by priority
 				response.items.sort(function(a, b) {
@@ -365,6 +382,10 @@
 
 	function pages_refresh_sitemap() {
 		AJAX('GET {0}/api/pages/sitemap/'.format(managerurl), function(response) {
+
+			if (isError(arguments))
+				return;
+
 			// Converts object to Array
 			var keys = Object.keys(response.sitemap);
 			keys.sort();
@@ -416,7 +437,11 @@
 			switch ($(button).attr('name')) {
 				case 'edit':
 					loading.show();
-					AJAX('GET {0}/api/widgets/{1}/'.format(managerurl, row.id), function(response, err) {
+					AJAX('GET {0}/api/widgets/{1}/'.format(managerurl, row.id), function(response) {
+
+						if (isError(arguments))
+							return;
+
 						// Error prevention
 						if (response instanceof Array)
 							response = {};
@@ -433,6 +458,10 @@
 							return;
 						loading.show();
 						AJAX('DELETE {0}/api/widgets/'.format(managerurl), { id: row.id }, function() {
+
+							if (isError(arguments))
+								return;
+
 							widgets_refresh();
 							loading.hide(500);
 						});
@@ -447,6 +476,9 @@
 		component.submit = function(hide) {
 			var loading = FIND('loading').show();
 			AJAX('POST {0}/api/widgets/'.format(managerurl), widgets.form, function(response) {
+
+				if (isError(arguments))
+					return;
 
 				loading.hide(500);
 
@@ -468,6 +500,8 @@
 	// Method refreshes grid
 	function widgets_refresh() {
 		AJAX('GET {0}/api/widgets/'.format(managerurl), function(response) {
+			if (isError(arguments))
+				return;
 			SET('widgets.grid', { items: response, page: 1, pages: 1, count: response.length, limit: 1000 });
 		});
 	}

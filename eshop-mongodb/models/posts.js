@@ -49,8 +49,8 @@ NEWSCHEMA('Post').make(function(schema) {
 			builder.where('isremoved', false);
 
 			// Prepares searching
-			if (typeof(options.search) === 'string')
-				builder.like('search', options.search, '*');
+			if (options.search)
+				builder.in('search', options.search.keywords(true, true));
 
 			// Checks language
 			if (options.language)
@@ -156,7 +156,7 @@ NEWSCHEMA('Post').make(function(schema) {
 		if (category)
 			model.category_linker = category.linker;
 
-		model.search = ((model.name || '') + ' ' + (model.keywords || '') + ' ' + (model.search || '')).keywords(true, true).join(' ');
+		model.search = ((model.name || '') + ' ' + (model.keywords || '') + ' ' + (model.search || '')).keywords(true, true);
 
 		var nosql = DB(error);
 
@@ -180,7 +180,7 @@ NEWSCHEMA('Post').make(function(schema) {
 
 			F.emit('posts.save', model);
 
-			// Refreshes internal informations e.g. sitemap
+			// Refreshes internal informations e.g. categories
 			setTimeout(refresh, 1000);
 		});
 	});
@@ -190,14 +190,17 @@ NEWSCHEMA('Post').make(function(schema) {
 		var nosql = DB(error);
 		nosql.remove('posts');
 		nosql.exec(function(err) {
-			callback();
+			callback(SUCCESS(true));
+
 			if (err)
-				setTimeout(refresh, 1000);
+				return;
+
+			setTimeout(refresh, 1000);
 		});
 	});
 });
 
-// Refreshes internal informations (sitemap and navigations)
+// Refreshes internal informations (categories)
 function refresh() {
 
 	var categories = {};
@@ -230,6 +233,11 @@ function refresh() {
 	});
 
 	nosql.exec(function(err, response) {
+
+		if (err) {
+			F.error(err);
+			return;
+		}
 
 		var output = [];
 

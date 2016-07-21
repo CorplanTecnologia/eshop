@@ -3,13 +3,13 @@
  * @author Peter Širka
  */
 
-var COOKIE = '__webcounter';
-var REG_ROBOT = /search|agent|bot|crawler/i;
-var FILE_CACHE = 'webcounter.cache';
-var FILE_STATS = 'webcounter.nosql';
-var TIMEOUT_VISITORS = 1200; // 20 MINUTES
-
-var Fs = require('fs');
+const COOKIE = '__webcounter';
+const REG_ROBOT = /search|agent|bot|crawler/i;
+const REG_HOSTNAME = /(http|https)\:\/\/(www\.)/gi;
+const FILE_CACHE = 'webcounter.cache';
+const FILE_STATS = 'webcounter.nosql';
+const TIMEOUT_VISITORS = 1200; // 20 MINUTES
+const Fs = require('fs');
 
 function WebCounter() {
 	this.stats = { pages: 0, day: 0, month: 0, year: 0, hits: 0, unique: 0, uniquemonth: 0, count: 0, search: 0, direct: 0, social: 0, unknown: 0, advert: 0, mobile: 0, desktop: 0, visitors: 0, robots: 0 };
@@ -19,7 +19,7 @@ function WebCounter() {
 	this.current = 0;
 	this.last = 0;
 	this.lastvisit = null;
-	this.social = ['plus.url.google', 'plus.google', 'twitter', 'facebook', 'linkedin', 'tumblr', 'flickr', 'instagram', 'vkontakte'];
+	this.social = ['plus.url.google', 'plus.google', 'twitter', 'facebook', 'linkedin', 'tumblr', 'flickr', 'instagram', 'vkontakte', 'snapchat', 'skype', 'whatsapp', 'wechat'];
 	this.search = ['google', 'bing', 'yahoo', 'duckduckgo', 'yandex'];
 	this.ip = [];
 	this.url = [];
@@ -30,13 +30,11 @@ function WebCounter() {
 	this._onValid = function(req) {
 		var self = this;
 		var agent = req.headers['user-agent'];
-		if (!agent || req.headers['x-moz'] === 'prefetch')
+
+		if (!agent || req.headers['x-moz'] === 'prefetch' || (self.onValid && !self.onValid(req)))
 			return false;
 
-		if (self.onValid && !self.onValid(req))
-			return false;
-
-		if (agent.match(REG_ROBOT)) {
+		if (REG_ROBOT.test(agent)) {
 			self.stats.robots++;
 			return false;
 		}
@@ -63,7 +61,7 @@ WebCounter.prototype = {
 
 	get today() {
 		var self = this;
-		var stats = utils.copy(self.stats);
+		var stats = U.copy(self.stats);
 		stats.last = self.lastvisit;
 		stats.pages = stats.hits && stats.count ? (stats.hits / stats.count).floor(2) : 0;
 		return stats;
@@ -133,7 +131,7 @@ WebCounter.prototype.clean = function() {
  * Custom counter
  * @return {Module]
  */
-WebCounter.prototype.increment = function(type) {
+WebCounter.prototype.increment = WebCounter.prototype.inc = function(type) {
 
 	var self = this;
 
@@ -152,17 +150,7 @@ WebCounter.prototype.increment = function(type) {
 WebCounter.prototype.counter = function(req, res) {
 
 	var self = this;
-
-	if (!self._onValid(req))
-		return false;
-
-	if (req.xhr && !self.allowXHR)
-		return false;
-
-	if (req.method !== 'GET')
-		return false;
-
-	if (!req.headers['accept'] || !req.headers['accept-language'])
+	if (!self._onValid(req) || req.method !== 'GET' || (req.xhr && !self.allowXHR) || (!req.headers['accept'] || !req.headers['accept-language']))
 		return false;
 
 	var arr = self.arr;
@@ -182,7 +170,7 @@ WebCounter.prototype.counter = function(req, res) {
 
 	if (!ping || isHits) {
 		stats.hits++;
-		self.refreshURL(referer, req);
+		self.refreshURL(referer, req, ping);
 	}
 
 	if (exists)
@@ -191,8 +179,6 @@ WebCounter.prototype.counter = function(req, res) {
 	var isUnique = false;
 
 	if (user) {
-
-		sum = Math.abs(self.current - user) / 1000;
 
 		// 20 minutes
 		if (sum < TIMEOUT_VISITORS) {
@@ -227,7 +213,7 @@ WebCounter.prototype.counter = function(req, res) {
 	res.cookie(COOKIE, ticks, now.add('5 days'));
 
 	if (self.allowIP)
-		self.ip.push({ ip: req.ip, url: req.uri.href });
+		self.ip.push({ ip: req.ip, url: ping || req.uri.href, empty: referer ? false : true });
 
 	var online = self.online;
 
@@ -242,25 +228,21 @@ WebCounter.prototype.counter = function(req, res) {
 		return true;
 	}
 
-	referer = getReferer(referer);
+	referer = getReferrer(referer);
 
 	if (!referer || (webcounter.hostname && referer.indexOf(webcounter.hostname) !== -1)) {
 		stats.direct++;
 		return true;
 	}
 
-	var length = self.social.length;
-
-	for (var i = 0; i < length; i++) {
+	for (var i = 0, length = self.social.length; i < length; i++) {
 		if (referer.indexOf(self.social[i]) !== -1) {
 			stats.social++;
 			return true;
 		}
 	}
 
-	var length = self.search.length;
-
-	for (var i = 0; i < length; i++) {
+	for (var i = 0, length = self.search.length; i < length; i++) {
 		if (referer.indexOf(self.search[i]) !== -1) {
 			stats.search++;
 			return true;
@@ -277,10 +259,10 @@ WebCounter.prototype.counter = function(req, res) {
  */
 WebCounter.prototype.save = function() {
 	var self = this;
-	var filename = framework.path.databases(FILE_CACHE);
-	var stats = Utils.copy(self.stats);
+	var filename = F.path.databases(FILE_CACHE);
+	var stats = U.copy(self.stats);
 	stats.pages = stats.hits && stats.count ? (stats.hits / stats.count).floor(2) : 0;
-	Fs.writeFile(filename, JSON.stringify(stats), utils.noop);
+	Fs.writeFile(filename, JSON.stringify(stats), NOOP);
 	return self;
 };
 
@@ -291,7 +273,7 @@ WebCounter.prototype.save = function() {
 WebCounter.prototype.load = function() {
 
 	var self = this;
-	var filename = framework.path.databases(FILE_CACHE);
+	var filename = F.path.databases(FILE_CACHE);
 
 	Fs.readFile(filename, function(err, data) {
 
@@ -300,7 +282,7 @@ WebCounter.prototype.load = function() {
 
 		try
 		{
-			self.stats = utils.copy(JSON.parse(data.toString('utf8')));
+			self.stats = U.copy(JSON.parse(data.toString('utf8')));
 		} catch (ex) {}
 
 	});
@@ -314,8 +296,8 @@ WebCounter.prototype.load = function() {
  */
 WebCounter.prototype.append = function() {
 	var self = this;
-	var filename = framework.path.databases(FILE_STATS);
-	Fs.appendFile(filename, JSON.stringify(self.stats) + '\n', utils.noop);
+	var filename = F.path.databases(FILE_STATS);
+	Fs.appendFile(filename, JSON.stringify(self.stats) + '\n', NOOP);
 	return self;
 };
 
@@ -328,20 +310,16 @@ WebCounter.prototype.daily = function(callback) {
 	var self = this;
 	self.statistics(function(arr) {
 
-		var length = arr.length;
+		if (!arr.length)
+			return callback(EMPTYARRAY);
+
 		var output = [];
 
-		for (var i = 0; i < length; i++) {
-
-			var value = arr[i] || '';
-
-			if (!value.length)
+		for (var i = 0, length = arr.length; i < length; i++) {
+			if (!arr[i])
 				continue;
-
-			try
-			{
-				output.push(JSON.parse(value));
-			} catch (ex) {}
+			var value = arr[i].parseJSON();
+			value && output.push(value);
 		}
 
 		callback(output);
@@ -360,27 +338,26 @@ WebCounter.prototype.monthly = function(callback) {
 	var self = this;
 	self.statistics(function(arr) {
 
-		var length = arr.length;
+		if (!arr.length)
+			return callback(EMPTYOBJECT);
+
 		var stats = {};
 
-		for (var i = 0; i < length; i++) {
+		for (var i = 0, length = arr.length; i < length; i++) {
 
-			var value = arr[i] || '';
-
-			if (!value.length)
+			if (!arr[i])
 				continue;
 
-			try
-			{
-				var current = JSON.parse(value);
-				var key = current.month + '-' + current.year;
+			var value = arr[i].parseJSON();
+			if (!value)
+				continue;
 
-				if (!stats[key])
-					stats[key] = current;
-				else
-					sum(stats[key], current);
+			var key = value.month + '-' + value.year;
 
-			} catch (ex) {}
+			if (stats[key])
+				sum(stats[key], value);
+			else
+				stats[key] = value;
 		}
 
 		callback(stats);
@@ -395,31 +372,30 @@ WebCounter.prototype.monthly = function(callback) {
  * @return {Module]
  */
 WebCounter.prototype.yearly = function(callback) {
-
 	var self = this;
+
 	self.statistics(function(arr) {
 
+		if (!arr.length)
+			return callback(EMPTYOBJECT);
+
 		var stats = {};
-		var length = arr.length;
 
-		for (var i = 0; i < length; i++) {
+		for (var i = 0, length = arr.length; i < length; i++) {
 
-			var value = arr[i] || '';
-
-			if (!value.length)
+			if (!arr[i])
 				continue;
 
-			try
-			{
-				var current = JSON.parse(value);
-				var key = current.year.toString();
+			var value = JSON.parse(arr[i]);
+			if (!value)
+				continue;
 
-				if (!stats[key])
-					stats[key] = current;
-				else
-					sum(stats[key], current);
+			var key = value.year.toString();
 
-			} catch (ex) {}
+			if (stats[key])
+				sum(stats[key], value);
+			else
+				stats[key] = value;
 		}
 
 		callback(stats);
@@ -434,25 +410,13 @@ WebCounter.prototype.yearly = function(callback) {
  * @return {Module]
  */
 WebCounter.prototype.statistics = function(callback) {
-
 	var self = this;
-	var filename = framework.path.databases(FILE_STATS);
+	var filename = F.path.databases(FILE_STATS);
 	var stream = Fs.createReadStream(filename);
-	var data = '';
-	var stats = {};
-
-	stream.on('error', function() {
-		callback([]);
-	});
-
-	stream.on('data', function(chunk) {
-		data += chunk.toString();
-	});
-
-	stream.on('end', function() {
-		callback(data.split('\n'));
-	});
-
+	var data = new Buffer(0);
+	stream.on('error', () => callback(EMPTYARRAY));
+	stream.on('data', (chunk) => data = Buffer.concat([data, chunk]));
+	stream.on('end', () => callback(data.toString('utf8').split('\n')));
 	stream.resume();
 	return self;
 };
@@ -463,25 +427,27 @@ WebCounter.prototype.statistics = function(callback) {
  * @param {String} referer
  * @param {Request} req
  */
-WebCounter.prototype.refreshURL = function(referer, req) {
-
-	if (!referer)
-		return;
+WebCounter.prototype.refreshURL = function(referer, req, ping) {
 
 	var self = this;
 
 	if (!self.allowIP)
 		return;
 
-	var length = self.ip.length;
+	var empty = false;
 
-	for (var i = 0; i < length; i++) {
+	if (!referer)
+		empty = true;
+
+	for (var i = 0, length = self.ip.length; i < length; i++) {
 		var item = self.ip[i];
-		if (item.ip === req.ip && item.url === referer) {
-			item.url = req.headers['x-ping'] || req.uri.href;
+		if (item.ip === req.ip && (item.empty === empty || item.url === referer)) {
+			item.url = ping || req.uri.href;
 			return;
 		}
 	}
+
+	self.ip.push({ ip: req.ip, url: ping || req.uri.href, empty: true });
 };
 
 function sum(a, b) {
@@ -494,14 +460,14 @@ function sum(a, b) {
 			return;
 		}
 
-		if (typeof(a[o]) === 'undefined')
+		if (a[o] === undefined)
 			a[o] = 0;
-		if (typeof(b[o]) !== 'undefined')
+		if (b[o] !== undefined)
 			a[o] += b[o];
 	});
 }
 
-function getReferer(host) {
+function getReferrer(host) {
 	if (!host)
 		return null;
 	var index = host.indexOf('/') + 2;
@@ -509,18 +475,24 @@ function getReferer(host) {
 }
 
 // Instance
-var webcounter = new WebCounter();
+const webcounter = new WebCounter();
 
-var delegate_request = function(controller, name) {
+const delegate_request = function(controller, name) {
 	webcounter.counter(controller.req, controller.res);
 };
 
 module.exports.name = 'webcounter';
-module.exports.version = 'v3.0.0';
+module.exports.version = 'v3.1.0';
 module.exports.instance = webcounter;
 
-module.exports.install = function() {
+module.exports.install = function(options) {
 	setTimeout(refresh_hostname, 10000);
+
+	if (options) {
+		webcounter.allowIP = options.ip === true;
+		webcounter.allowXHR = options.xhr === false ? false : true;
+	}
+
 	F.on('service', function(counter) {
 		if (counter % 120 === 0)
 			refresh_hostname();
@@ -535,17 +507,17 @@ function refresh_hostname() {
 		url = F.config.url || F.config.hostname;
 	if (!url)
 		return;
-	url = url.toString().replace(/(http|https)\:\/\/(www\.)/gi, '');
+	url = url.toString().replace(REG_HOSTNAME, '');
 	var index = url.indexOf('/');
 	if (index !== -1)
 		url = url.substring(0, index);
 	webcounter.hostname = url.toLowerCase();
 }
 
-framework.on('controller', delegate_request);
+F.on('controller', delegate_request);
 
 module.exports.usage = function() {
-	var stats = utils.extend({}, webcounter.stats);
+	var stats = U.extend({}, webcounter.stats);
 	stats.online = webcounter.online;
 	return stats;
 };

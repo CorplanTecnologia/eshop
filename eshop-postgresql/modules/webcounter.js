@@ -3,9 +3,10 @@
  * @author Peter Širka
  */
 
-var COOKIE = '__webcounter';
-var REG_ROBOT = /search|agent|bot|crawler/i;
-var TIMEOUT_VISITORS = 1200; // 20 MINUTES
+const COOKIE = '__webcounter';
+const REG_ROBOT = /search|agent|bot|crawler/i;
+const REG_HOSTNAME = /(http|https)\:\/\/(www\.)/gi;
+const TIMEOUT_VISITORS = 1200; // 20 MINUTES
 
 function WebCounter() {
 	this.stats = { pages: 0, day: 0, month: 0, year: 0, hits: 0, unique: 0, uniquemonth: 0, count: 0, search: 0, direct: 0, social: 0, unknown: 0, advert: 0, mobile: 0, desktop: 0, visitors: 0, orders: 0, newsletter: 0, contactforms: 0, users: 0, robots: 0 };
@@ -16,7 +17,7 @@ function WebCounter() {
 	this.current = 0;
 	this.last = 0;
 	this.lastvisit = null;
-	this.social = ['plus.url.google', 'plus.google', 'twitter', 'facebook', 'linkedin', 'tumblr', 'flickr', 'instagram', 'vkontakte'];
+	this.social = ['plus.url.google', 'plus.google', 'twitter', 'facebook', 'linkedin', 'tumblr', 'flickr', 'instagram', 'vkontakte', 'snapchat', 'skype', 'whatsapp', 'wechat'];
 	this.search = ['google', 'bing', 'yahoo', 'duckduckgo', 'yandex'];
 	this.ip = [];
 	this.url = [];
@@ -27,13 +28,11 @@ function WebCounter() {
 	this._onValid = function(req) {
 		var self = this;
 		var agent = req.headers['user-agent'];
-		if (!agent || req.headers['x-moz'] === 'prefetch')
+
+		if (!agent || req.headers['x-moz'] === 'prefetch' || (self.onValid && !self.onValid(req)))
 			return false;
 
-		if (self.onValid && !self.onValid(req))
-			return false;
-
-		if (agent.match(REG_ROBOT)) {
+		if (REG_ROBOT.test(agent)) {
 			self.stats.robots++;
 			return false;
 		}
@@ -71,24 +70,22 @@ WebCounter.prototype = {
 WebCounter.prototype.clean = function() {
 
 	var self = this;
-
-	self.interval++;
-
 	var now = new Date();
 	var stats = self.stats;
 
+	self.interval++;
 	self.current = now.getTime();
 
 	var day = now.getDate();
 	var month = now.getMonth() + 1;
 	var year = now.getFullYear();
-	var length = 0;
 
 	if (stats.day !== day || stats.month !== month || stats.year !== year) {
 		stats.day = day;
 		stats.month = month;
 		stats.year = year;
 		self.save();
+		reset(self.history);
 	} else if (self.interval % 20 === 0)
 		self.save();
 
@@ -102,7 +99,7 @@ WebCounter.prototype.clean = function() {
 
 	if (tmp0 !== arr[0] || tmp1 !== arr[1]) {
 		var online = arr[0] + arr[1];
-		if (online != self.last) {
+		if (online !== self.last) {
 			if (self.allowIP)
 				self.ip = self.ip.slice(tmp0);
 			self.last = online;
@@ -120,7 +117,7 @@ WebCounter.prototype.increment = function(type) {
 
 	var self = this;
 
-	if (typeof(self.stats[type]) === 'undefined')
+	if (self.stats[type] === undefined)
 		self.stats[type] = 1;
 	else
 		self.stats[type]++;
@@ -135,17 +132,7 @@ WebCounter.prototype.increment = function(type) {
 WebCounter.prototype.counter = function(req, res) {
 
 	var self = this;
-
-	if (!self._onValid(req))
-		return false;
-
-	if (req.xhr && !self.allowXHR)
-		return false;
-
-	if (req.method !== 'GET')
-		return false;
-
-	if (!req.headers['accept'] || !req.headers['accept-language'])
+	if (!self._onValid(req) || req.method !== 'GET' || (req.xhr && !self.allowXHR) || !req.headers['accept'] || !req.headers['accept-language'])
 		return false;
 
 	var arr = self.arr;
@@ -163,7 +150,6 @@ WebCounter.prototype.counter = function(req, res) {
 		sum = Math.abs(self.current - user) / 1000;
 
 	var isHits = user ? sum >= TIMEOUT_VISITORS : true;
-
 	if (!ping || isHits) {
 		stats.hits++;
 		history.hits++;
@@ -186,10 +172,8 @@ WebCounter.prototype.counter = function(req, res) {
 		}
 
 		var date = new Date(user);
-		if (date.getDate() !== now.getDate() || date.getMonth() !== now.getMonth() || date.getFullYear() !== now.getFullYear()) {
+		if (date.getDate() !== now.getDate() || date.getMonth() !== now.getMonth() || date.getFullYear() !== now.getFullYear())
 			isUnique = true;
-			reset(history);
-		}
 
 		if (date.diff('months') < 0) {
 			history.uniquemonth++;
@@ -246,9 +230,7 @@ WebCounter.prototype.counter = function(req, res) {
 		return true;
 	}
 
-	var length = self.social.length;
-
-	for (var i = 0; i < length; i++) {
+	for (var i = 0, length = self.social.length; i < length; i++) {
 		if (referer.indexOf(self.social[i]) !== -1) {
 			stats.social++;
 			history.social++;
@@ -256,9 +238,7 @@ WebCounter.prototype.counter = function(req, res) {
 		}
 	}
 
-	var length = self.search.length;
-
-	for (var i = 0; i < length; i++) {
+	for (var i = 0, length = self.search.length; i < length; i++) {
 		if (referer.indexOf(self.search[i]) !== -1) {
 			stats.search++;
 			history.search++;
@@ -299,8 +279,8 @@ WebCounter.prototype.save = function() {
 			builder.set('dateupdated', new Date());
 			sql.update('tbl_visitor').replace(builder).where('id', id);
 		} else {
-			stats.day = dt.getDate() + 1;
-			stats.month = dt.getMonth();
+			stats.day = dt.getDate();
+			stats.month = dt.getMonth() + 1;
 			stats.year = dt.getFullYear();
 			builder.set(stats);
 			builder.set('id', id);
@@ -308,6 +288,9 @@ WebCounter.prototype.save = function() {
 		}
 
 		reset(self.stats);
+		self.stats.day = dt.getDate();
+		self.stats.month = dt.getMonth() + 1;
+		self.stats.year = dt.getFullYear();
 		resume();
 	});
 
@@ -321,15 +304,10 @@ WebCounter.prototype.save = function() {
  * @return {Module]
  */
 WebCounter.prototype.daily = function(callback) {
-
 	var self = this;
 	var sql = DB();
-
 	sql.query('stats', self.query()).group(['day', 'month', 'year']);
-	sql.exec(function(err, response) {
-		callback(response.stats);
-	});
-
+	sql.exec((err, response) => callback(response.stats));
 	return self;
 };
 
@@ -435,17 +413,15 @@ function sum(a, b) {
 	Object.keys(b).forEach(function(o) {
 		if (o === 'day' || o === 'year' || o === 'month')
 			return;
-		if (typeof(a[o]) === 'undefined')
+		if (a[o] === undefined)
 			a[o] = 0;
-		if (typeof(b[o]) !== 'undefined')
+		if (b[o] !== undefined)
 			a[o] += b[o];
 	});
 }
 
 function reset(stats) {
-
 	delete stats.last;
-
 	var keys = Object.keys(stats);
 	for (var i = 0, length = keys.length; i < length; i++)
 		stats[keys[i]] = 0;
@@ -459,20 +435,20 @@ function getReferer(host) {
 }
 
 // Instance
-var webcounter = new WebCounter();
+const webcounter = new WebCounter();
 
-var delegate_request = function(controller, name) {
+const delegate_request = function(controller) {
 	webcounter.counter(controller.req, controller.res);
 };
 
 module.exports.name = 'webcounter';
-module.exports.version = 'v3.0.0';
+module.exports.version = 'v3.1.0';
 module.exports.instance = webcounter;
 
-framework.on('controller', delegate_request);
+F.on('controller', delegate_request);
 
 module.exports.usage = function() {
-	var stats = utils.extend({}, webcounter.stats);
+	var stats = U.extend({}, webcounter.stats);
 	stats.online = webcounter.online;
 	return stats;
 };
@@ -483,8 +459,12 @@ module.exports.install = function() {
 		var sql = DB();
 		sql.select('stats', 'tbl_visitor').where('id', (new Date()).format('yyyyMMdd')).first();
 		sql.exec(function(err, response) {
-			if (response.stats)
-				webcounter.history = response.stats;
+			if (!response.stats)
+				return;
+			webcounter.history = response.stats;
+			webcounter.stats.day = webcounter.history.day;
+			webcounter.stats.month = webcounter.history.month;
+			webcounter.stats.year = webcounter.history.year;
 		});
 	}, 1000);
 
@@ -503,7 +483,7 @@ function refresh_hostname() {
 		url = F.config.url || F.config.hostname;
 	if (!url)
 		return;
-	url = url.toString().replace(/(http|https)\:\/\/(www\.)/gi, '');
+	url = url.toString().replace(REG_HOSTNAME, '');
 	var index = url.indexOf('/');
 	if (index !== -1)
 		url = url.substring(0, index);
