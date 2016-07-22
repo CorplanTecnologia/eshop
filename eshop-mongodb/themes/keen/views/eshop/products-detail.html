@@ -76,13 +76,11 @@
                                     <input id="product-quantity" type="text" value="1" readonly class="form-control input-sm">
                                 </div>
                                 <button class="btn btn-primary detail-buy" data-id="@{model.id}" data-price="@{model.price}">Add to cart</button>
-                                <a href="/checkout/" class="btn btn-default"><span class="fa fa-shopping-cart mr5"></span> @(Order it now)</a>
-
-
                             </div>
                             <div class="detail-checkout hidden">
                                 <div class="alert alert-warning">
-                                    @(The product <strong>@{model.name}</strong> is in your shopping cart) <b class="data-checkout-count"></b></div>
+                                    <div>@(The product <strong>@{model.name}</strong> is in your shopping cart) <b class="data-checkout-count"></b></div>
+                                    <a href="/checkout/" class="warning"><span class="fa fa-shopping-cart mr5"></span> @(Order it now)</a></div>
                             </div>
                             <div class="review">
                                 <input type="range" value="4" step="0.25" id="backing4">
