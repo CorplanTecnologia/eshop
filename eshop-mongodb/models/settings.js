@@ -97,7 +97,7 @@ NEWSCHEMA('Settings').make(function(schema) {
 				return;
 			}
 
-			if (doc) {
+			if (doc && doc.common) {
 				callback(doc.common);
 				return;
 			}
