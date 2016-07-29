@@ -101,7 +101,7 @@ function upload() {
 
 		var id = new ObjectID();
 
-		GridStore.writeFile(DB(), id, file.path, file.filename, null, function(err) {
+		DB().writeFile(id, file.path, file.filename, null, function(err) {
 
 			if (err)
 				return next();
