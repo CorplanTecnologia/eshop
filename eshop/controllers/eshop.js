@@ -13,7 +13,7 @@ exports.install = function() {
 	// ORDERS
 	F.route('#checkout');
 	F.route('#order',            view_checkout, ['*Order']);
-	F.route('#payment',          process_payment_paypal, ['*Order']);
+	F.route('#payment',          process_payment_paypal, ['*Order', 10000]);
 
 	// USER ACCOUNT
 	F.route('#account',          view_account, ['authorized', '*Order']);
@@ -144,26 +144,11 @@ function process_payment_paypal(linker) {
 	var paypal = PayPal.create(F.config.custom.paypaluser, F.config.custom.paypalpassword, F.config.custom.paypalsignature, redirect, redirect, F.config.custom.paypaldebug);
 
 	paypal.detail(self, function(err, data, id, price) {
-
 		if (err)
 			return self.throw500(err);
-
-		var success = false;
-
-		switch ((data.PAYMENTSTATUS || '').toLowerCase()) {
-			case 'pending':
-			case 'completed':
-			case 'processed':
-				success = true;
-				break;
-		}
-
-		if (!success)
-			return self.view('checkout-error');
-
-		self.$workflow('paid', linker, function() {
-			self.redirect('../?success=1');
-		});
+		if (!data.success)
+			return self.view('checkout-error', data);
+		self.$workflow('paid', linker, () => self.redirect('../?success=1'));
 	});
 }
 
