@@ -73,12 +73,12 @@
 
 	if (query.productid) {
 		form.message = '@(I need more informations about the product:) ' + query.productid + '.\n\nThanks';
-		$(window).animate({ scrollTo: $('#contactform').offset().top - 20 }, 1000);
+		$('html,body').animate({ scrollTop: $('#contactform').offset().top - 20 }, 1000);
 	}
 
 	if (query.orderid) {
 		form.message = '@(I want to cancel the order #) ' + query.orderid + '.\n\nThanks';
-		$(window).animate({ scrollTo: $('#contactform').offset().top - 20 }, 1000);
+		$('html,body').animate({ scrollTop: $('#contactform').offset().top - 20 }, 1000);
 	}
 
 </script>
